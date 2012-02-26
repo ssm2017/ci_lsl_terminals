@@ -1,4 +1,13 @@
 <?php
+/**
+ * @package    ci_lsl_terminals
+ * @copyright Copyright (C) 2012 Wene - ssm2017 Binder ( S.Massiaux ). All rights reserved.
+ * @license   GNU/GPL, http://www.gnu.org/licenses/gpl-2.0.html
+ * ci_lsl_terminals is free software. This version may have been modified pursuant
+ * to the GNU General Public License, and as distributed it includes or
+ * is derivative of works licensed under the GNU General Public License or
+ * other free or open source software licenses.
+ */
 
 if (!defined('BASEPATH'))
   exit('No direct script access allowed');
@@ -24,10 +33,10 @@ class Ajax extends CI_Controller {
     );
     $answer = @file_get_contents($url, 0, $ctx);
     if ($answer) {
-      echo '<span style="color:green">' . $answer . '</span>';
+      echo '<span class="online">Online</span>';
     }
     else {
-      echo '<span style="color:red">Offline</span>';
+      echo '<span class="offline">Offline</span>';
     }
   }
 
