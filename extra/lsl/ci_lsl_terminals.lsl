@@ -48,12 +48,7 @@ string terminal_name = "";
 integer TERMINAL_INSERTED = 70051;
 integer TERMINAL_UPDATED = 70052;
 integer TERMINAL_SAVE_ERROR = 70053;
-// build pos
-string buildPos()
-{
-    vector pos = llGetPos();
-    return (string)llFloor(pos.x)+"/"+(string)llFloor(pos.y)+"/"+(string)llFloor(pos.z);
-}
+// helpers
 string getParcelName()
 {
     return llList2String(llGetParcelDetails(llGetPos(),[PARCEL_DETAILS_NAME]), 0);
@@ -76,12 +71,9 @@ updateTerminal(string terminal_url)
     string md5pass = llMD5String(password, keypass);
     // sending values
     updateTerminalId =  llHTTPRequest( url+ "/inworld/update_terminal", [HTTP_METHOD, "POST", HTTP_MIMETYPE, "application/x-www-form-urlencoded"],
-                    "uuid="+ llGetKey()
-                    +"&url="+ llEscapeURL(terminal_url)
+                    "url="+ llEscapeURL(terminal_url)
                     +"&name="+ website_terminal_name
-                    +"&region="+ (string)llGetRegionName()
                     +"&parcel="+ getParcelName()
-                    +"&position="+buildPos()
                     +"&password="+ md5pass
                     +"&key="+ (string)keypass
                     );

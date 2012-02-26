@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package    ci_lsl_terminals
  * @copyright Copyright (C) 2012 Wene - ssm2017 Binder ( S.Massiaux ). All rights reserved.
@@ -8,7 +9,6 @@
  * is derivative of works licensed under the GNU General Public License or
  * other free or open source software licenses.
  */
-
 if (!defined('BASEPATH'))
   exit('No direct script access allowed');
 
@@ -19,33 +19,45 @@ class Inworld extends CI_Controller {
   }
 
   function update_terminal() {
+
+    // load some usefull files
+    $this->load->helper('ci_lsl_terminals_helper');
+    $this->config->load('ci_lsl_terminals');
+
+    // chek for the network
+    if (!check_access($this->config->item('ci_lsl_terminal_inworld_allowed_networks'))) {
+      echo '70053|Not authorized';
+      return;
+    }
+
+    // check for the password
+    if (!check_password($this->input->get_post('password'), $this->input->get_post('key'), $this->config->item('ci_lsl_terminal_inworld_password'))) {
+      echo '70053|Wrong password';
+      return;
+    }
+
     // get values
-    $values = array(
-      'uuid' => $this->input->get_post('uuid'),
+    $values = get_values();
+
+    // fill the values
+    $data = array(
+      'uuid' => $values->uuid,
       'url' => $this->input->get_post('url'),
       'name' => $this->input->get_post('name'),
-      'region' => $this->input->get_post('region'),
       'parcel' => $this->input->get_post('parcel'),
-      'position' => $this->input->get_post('position'),
-      'password' => $this->input->get_post('password'),
-      'key' => $this->input->get_post('key')
+      'region' => $values->region,
+      'position' => $values->position
     );
 
     // check values
-    if (!$values['uuid'] || !$values['url']) {
+    if (!$data['url']) {
       echo '70053|Missing values';
       return;
     }
 
-    // get config
-
-    // check the password
-    unset($values['password']);
-    unset($values['key']);
-
     // update the terminal
     $this->load->model('Terminals_model');
-    echo $this->Terminals_model->update_terminal($values);
+    echo $this->Terminals_model->update_terminal($data);
   }
 
 }

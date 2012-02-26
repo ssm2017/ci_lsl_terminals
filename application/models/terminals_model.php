@@ -47,4 +47,8 @@ class Terminals_model extends CI_Model {
 		return $ret;
 	}
 
+  function delete_terminal_by_url($url) {
+    $this->db->where('url', $url);
+    $this->db->delete('ci_lsl_terminals');
+  }
 }

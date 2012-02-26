@@ -16,7 +16,7 @@ class Terminals_list extends CI_Controller {
 
   function index($sort_by = NULL, $sort_order = NULL, $offset = 0) {
 
-    // get the config file
+    // load some usefull files
     $this->config->load('ci_lsl_terminals');
 
     // define start values
