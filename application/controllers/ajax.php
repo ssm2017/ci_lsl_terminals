@@ -19,24 +19,37 @@ class Ajax extends CI_Controller {
   }
 
   function check_terminal() {
+    $this->config->load('ci_lsl_terminals');
     $url = $this->input->get('url');
+
     if (!$url) {
       echo "Missing arguments";
       return;
     }
     $ctx = stream_context_create(
-        array(
-          'http' => array(
-            'timeout' => 3
-          )
+      array(
+        'http' => array(
+          'timeout' => $this->config->item('ci_lsl_terminal_timeout')
         )
+      )
     );
     $answer = @file_get_contents($url, 0, $ctx);
     if ($answer) {
       echo '<span class="online">Online</span>';
     }
     else {
-      echo '<span class="offline">Offline</span>';
+      $delete = $this->input->get('autodelete');
+      if ($delete) {
+        $this->config->load('ci_lsl_terminals');
+        if ($this->config->item('ci_lsl_terminal_autodelete')) {
+          $this->load->model('Terminals_model');
+          $this->Terminals_model->delete_terminal_by_url($url);
+          echo '<span class="offline">Deleted</span>';
+        }
+      }
+      else {
+        echo '<span class="offline">Offline</span>';
+      }
     }
   }
 

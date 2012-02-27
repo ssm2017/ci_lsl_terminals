@@ -47,8 +47,19 @@ class Terminals_model extends CI_Model {
 		return $ret;
 	}
 
+  function delete_terminals_by_uuids($uuids) {
+    $this->db->where_in('uuid', $uuids);
+    $this->db->delete('ci_lsl_terminals');
+  }
+
   function delete_terminal_by_url($url) {
     $this->db->where('url', $url);
     $this->db->delete('ci_lsl_terminals');
+  }
+
+  function get_all_terminals() {
+    $q = $this->db->select('*')
+			->from('ci_lsl_terminals');
+    return $q->get()->result();
   }
 }

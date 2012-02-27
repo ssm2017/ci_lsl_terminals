@@ -59,5 +59,4 @@ class Inworld extends CI_Controller {
     $this->load->model('Terminals_model');
     echo $this->Terminals_model->update_terminal($data);
   }
-
 }

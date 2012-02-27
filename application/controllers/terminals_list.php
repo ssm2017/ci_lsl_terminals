@@ -57,4 +57,31 @@ class Terminals_list extends CI_Controller {
     $this->load->view('includes/footer');
 	}
 
+  function delete_offline_terminals() {
+    // load some usefull files
+    $this->load->helper('ci_lsl_terminals_helper');
+    $this->load->helper('url');
+    $this->config->load('ci_lsl_terminals');
+
+    // check for the password
+    if (!check_password($this->input->get_post('password'), $this->input->get_post('key'), $this->config->item('ci_lsl_terminal_inworld_password'))) {
+      echo '70053|Wrong password';
+      return;
+    }
+
+    // run the action
+    $this->load->model('Terminals_model');
+    // get all terminals
+    $terminals = $this->Terminals_model->get_all_terminals();
+    // show the output
+    $header_data = array(
+      'title' => 'All Terminals',
+      'scripts' => '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>',
+      'css' => '<link rel="stylesheet" type="text/css" href="'. site_url('assets/css/ci_lsl_terminals.css'). '" />'
+    );
+    $this->load->view('includes/header', $header_data);
+		$this->load->view('full_list', array('terminals' => $terminals));
+    $this->load->view('includes/footer');
+  }
+
 }

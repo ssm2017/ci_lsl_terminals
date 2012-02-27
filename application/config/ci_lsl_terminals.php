@@ -1,5 +1,6 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 $config = array();
+$config['ci_lsl_terminal_timeout']	= 3;
 // inworld
 $config['ci_lsl_terminal_inworld_password']	= '0000';
 $config['ci_lsl_terminal_inworld_allowed_networks']	= array(
