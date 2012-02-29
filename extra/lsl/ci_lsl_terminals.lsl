@@ -10,7 +10,7 @@
 // url ex: string url = "http://test.com";
 string url = "http://127.0.0.1/ci_lsl_terminals";
 // password : the password you put in the joomla component config
-string password = "";
+string password = "0000";
 // the terminal name on the website
 string website_terminal_name = "";
 // *********************************
@@ -27,6 +27,7 @@ string _SYMBOL_ARROW = "⤷";
 // common
 string _RESET = "Reset";
 // terminal
+string _TERMINAL_INIT = "Terminal initialisation";
 string _UPDATING_TERMINAL = "Updating terminal...";
 string _TERMINAL_INSERTED = "Terminal inserted.";
 string _TERMINAL_UPDATED = "Terminal updated.";
@@ -40,30 +41,48 @@ string _SERVER_ERROR = "Server error";
 // ============================================================
 //      NOTHING SHOULD BE MODIFIED UNDER THIS LINE
 // ============================================================
-// separators
-string PARAM_SEPARATOR = "|";
 // some vars
 string terminal_name = "";
+// **********************
+//      CONSTANTS
+// **********************
+// http_request
+integer HTTP_REQUEST_GET = 70061;
+integer HTTP_REQUEST_POST = 70062;
+integer HTTP_REQUEST_RESPONSE = 70063;
+// params
+integer SET_PARAMS = 20025;
+integer GET_PARAMS = 20026;
+string FIELD_SEPARATOR = "Ⅱ"; // U+2161 ROMAN NUMERAL TWO
+string VALUE_SEPARATOR = "Ⅰ"; // U+2160 ROMAN NUMERAL ONE
 // messages integers
 integer TERMINAL_INSERTED = 70051;
 integer TERMINAL_UPDATED = 70052;
 integer TERMINAL_SAVE_ERROR = 70053;
-// helpers
-string getParcelName()
-{
+integer RESET = 20000;
+// **********************
+//        HELPERS
+// **********************
+// get the parcel name
+string getParcelName() {
     return llList2String(llGetParcelDetails(llGetPos(),[PARCEL_DETAILS_NAME]), 0);
+}
+// give params to other scripts
+giveParams() {
+    // url Ⅱ password
+    string params = url+FIELD_SEPARATOR
+                    +password;
+    llMessageLinked(LINK_THIS, SET_PARAMS, params, NULL_KEY);
 }
 // **********************
 //          HTTP
 // **********************
 key updateTerminalId;
-updateTerminal(string terminal_url)
-{
+updateTerminal(string terminal_url) {
     llOwnerSay(_SYMBOL_HOR_BAR_2);
     llOwnerSay(_SYMBOL_ARROW+ " "+ _UPDATING_TERMINAL);
     // get the website box name
-    if (website_terminal_name == "")
-    {
+    if (website_terminal_name == "") {
         website_terminal_name = terminal_name;
     }
     // building password
@@ -98,73 +117,100 @@ getServerAnswer(integer status, string body) {
         llOwnerSay(body);
     }
 }
+// extracts fields and values from a http request
+list parseQueryString(string message) {
+    list postData = [];         // The list with the data that was passed in.
+    list parsedMessage = llParseString2List(message,["&"],[]);    // The key/value pairs parsed into one list.
+    integer len = ~llGetListLength(parsedMessage);
+
+    while(++len) {
+        string currentField = llList2String(parsedMessage, len); // Current key/value pair as a string.
+
+        integer split = llSubStringIndex(currentField,"=");     // Find the "=" sign
+        if(split == -1) { // There is only one field in this part of the message.
+            postData += [llUnescapeURL(currentField),""];
+        } else {
+            postData += [llUnescapeURL(llDeleteSubString(currentField,split,-1)), llUnescapeURL(llDeleteSubString(currentField,0,split))];
+        }
+    }
+    // Return the strided list.
+    return postData ;
+}
 // ***********************
-//  INIT PROGRAM
+//      MAIN PROGRAM
 // ***********************
-default
-{
-    on_rez(integer number)
-    {
+default {
+    on_rez(integer number) {
         llOwnerSay(_SYMBOL_HOR_BAR_2);
         llOwnerSay(_SYMBOL_RESTART+ " "+ _RESET);
+        llMessageLinked(LINK_THIS, RESET, "", NULL_KEY);
         llResetScript();
     }
 
-    changed(integer change)
-    {
-        if (change & CHANGED_REGION_START)
-        {
+    changed(integer change) {
+        if (change & (CHANGED_REGION | CHANGED_REGION_START | CHANGED_TELEPORT | CHANGED_INVENTORY) ) {
+            llMessageLinked(LINK_THIS, RESET, "", NULL_KEY);
             llResetScript();
         }
     }
-    state_entry()
-    {
+
+    state_entry() {
+        llOwnerSay(_TERMINAL_INIT);
         terminal_name = llGetObjectName();
         llRequestURL();
     }
 
-    http_request(key id, string method, string body)
-    {
-        if (method == URL_REQUEST_GRANTED)
-        {
-            updateTerminal(body);
+    link_message(integer sender_num, integer num, string str, key id) {
+        if (num == RESET) {
+            llResetScript();
         }
-        else if (method == "GET")
-        {
-            llHTTPResponse(id,200,"Online");
+        else if (num == GET_PARAMS) {
+            giveParams();
+        }
+        else if (num == HTTP_REQUEST_RESPONSE) {
+            llHTTPResponse(id,200,str);
         }
     }
-    http_response(key request_id, integer status, list metadata, string body)
-    {
-        if (request_id != updateTerminalId)
-        {
+
+    http_request(key id, string method, string body) {
+        if (method == URL_REQUEST_GRANTED) {
+            llOwnerSay(body);
+            updateTerminal(body);
+        }
+        else if (method == "GET") {
+            string x_query_string = llGetHTTPHeader(id, "x-query-string");
+            string x_query_path = llGetHTTPHeader(id, "x-path-info");
+            if (x_query_path == "/" && x_query_string == "command=get_status") {
+                llHTTPResponse(id,200,"Online");
+            }
+            else {
+                llMessageLinked(LINK_THIS, HTTP_REQUEST_GET, x_query_path+ VALUE_SEPARATOR+ x_query_string, id);
+            }
+        }
+    }
+    http_response(key request_id, integer status, list metadata, string body) {
+        if (request_id != updateTerminalId) {
             return;
         }
-        if ( status != 200 )
-        {
+        if ( status != 200 ) {
             getServerAnswer(status, body);
         }
-        else
-        {
+        else {
             body = llStringTrim( body , STRING_TRIM);
-            list data = llParseString2List(body, [PARAM_SEPARATOR],[]);
-            string command = llList2String(data,0);
-            llOwnerSay(_SYMBOL_HOR_BAR_2);
-            if (command == "70051")
-            {
-              llOwnerSay(_SYMBOL_ARROW+ " "+ _TERMINAL_INSERTED);
+            if (body == "70051") {
+                llOwnerSay(_SYMBOL_ARROW+ " "+ _TERMINAL_INSERTED);
             }
-            else if (command == "70052")
-            {
-              llOwnerSay(_SYMBOL_ARROW+ " "+ _TERMINAL_UPDATED);
+            else if (body == "70052") {
+                llOwnerSay(_SYMBOL_ARROW+ " "+ _TERMINAL_UPDATED);
             }
-            else if (command == "70053")
-            {
-              llOwnerSay(_SYMBOL_WARNING+ " "+ _TERMINAL_SAVE_ERROR+ " : "+ llList2String(data,1));
-            }
-            else
-            {
-                llOwnerSay(body);
+            else {
+                list values = llParseStringKeepNulls(body,[VALUE_SEPARATOR],[]);
+                if (llList2String(values, 0) == "70053") {
+                    llOwnerSay(_SYMBOL_WARNING+ " "+ _TERMINAL_SAVE_ERROR+ " : "+ llList2String(values,1));
+                }
+                else {
+                    llOwnerSay(body);
+                }
             }
         }
     }

@@ -14,6 +14,7 @@
       </th>
       <?php endforeach; ?>
       <th>Status</th>
+      <th>Say</th>
     </thead>
 
     <tbody class="border">
@@ -31,6 +32,16 @@
               url: '<?php echo base_url();?>ajax/check_terminal?url=<?php echo urlencode($terminal->url); ?>',
               success: function(data) {
                 $('#<?php echo $terminal->uuid; ?>-answer').html(data);
+              }
+            });
+          </script>
+        </td><td>
+          <span id="<?php echo $terminal->uuid; ?>-hello-answer"><img src="<?php echo base_url();?>assets/image/ajax-loader.gif"/></span>
+          <script>
+            $.ajax({
+              url: '<?php echo base_url();?>ajax/say_hello?url=<?php echo urlencode($terminal->url); ?>',
+              success: function(data) {
+                $('#<?php echo $terminal->uuid; ?>-hello-answer').html(data);
               }
             });
           </script>

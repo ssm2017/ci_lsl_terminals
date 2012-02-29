@@ -33,7 +33,7 @@ class Ajax extends CI_Controller {
         )
       )
     );
-    $answer = @file_get_contents($url, 0, $ctx);
+    $answer = @file_get_contents($url. '?command=get_status', 0, $ctx);
     if ($answer) {
       echo '<span class="online">Online</span>';
     }
@@ -50,6 +50,30 @@ class Ajax extends CI_Controller {
       else {
         echo '<span class="offline">Offline</span>';
       }
+    }
+  }
+
+  function say_hello() {
+    $this->config->load('ci_lsl_terminals');
+    $url = $this->input->get('url');
+
+    if (!$url) {
+      echo "Missing arguments";
+      return;
+    }
+    $ctx = stream_context_create(
+      array(
+        'http' => array(
+          'timeout' => $this->config->item('ci_lsl_terminal_timeout')
+        )
+      )
+    );
+    $answer = @file_get_contents($url. '/speaker?sentence=hello%20from%20the%20web', 0, $ctx);
+    if ($answer) {
+      echo '<span class="online">Said</span>';
+    }
+    else {
+      echo '<span class="offline">Error</span>';
     }
   }
 

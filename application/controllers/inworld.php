@@ -12,6 +12,11 @@
 if (!defined('BASEPATH'))
   exit('No direct script access allowed');
 
+if (!defined('FIELD_SEPARATOR'))
+  define('FIELD_SEPARATOR', 'Ⅱ');
+if (!defined('VALUE_SEPARATOR'))
+  define('VALUE_SEPARATOR', 'Ⅰ');
+
 class Inworld extends CI_Controller {
 
   function index() {
@@ -26,13 +31,13 @@ class Inworld extends CI_Controller {
 
     // chek for the network
     if (!check_access($this->config->item('ci_lsl_terminal_inworld_allowed_networks'))) {
-      echo '70053|Not authorized';
+      echo '70053'. VALUE_SEPARATOR. 'Not authorized';
       return;
     }
 
     // check for the password
     if (!check_password($this->input->get_post('password'), $this->input->get_post('key'), $this->config->item('ci_lsl_terminal_inworld_password'))) {
-      echo '70053|Wrong password';
+      echo '70053'. VALUE_SEPARATOR. 'Wrong password';
       return;
     }
 
@@ -51,7 +56,7 @@ class Inworld extends CI_Controller {
 
     // check values
     if (!$data['url']) {
-      echo '70053|Missing values';
+      echo '70053'. VALUE_SEPARATOR. 'Missing values';
       return;
     }
 
@@ -59,4 +64,23 @@ class Inworld extends CI_Controller {
     $this->load->model('Terminals_model');
     echo $this->Terminals_model->update_terminal($data);
   }
+  function test() {
+    $this->config->load('ci_lsl_terminals');
+    $url = 'http://inux:9000/lslhttp/685ca85a-cc5a-483b-ad44-8374115f8240/speaker?sentence=say%20hello';
+    $ctx = stream_context_create(
+      array(
+        'http' => array(
+          'timeout' => $this->config->item('ci_lsl_terminal_timeout')
+        )
+      )
+    );
+    $answer = @file_get_contents($url, 0, $ctx);
+    if ($answer) {
+      echo $answer;
+    }
+    else {
+      echo "no answer";
+    }
+  }
+
 }
